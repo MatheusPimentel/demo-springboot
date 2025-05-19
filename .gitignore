@@ -31,3 +31,28 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Diretórios de build
+/target/
+
+# Arquivos de log
+*.log
+
+# Configurações do IDE
+*.iml
+.idea/
+*.classpath
+*.project
+*.settings/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Arquivos temporários
+*.tmp
+*.bak
+*.swp
+
+# Arquivos de ambiente
+.env
