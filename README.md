@@ -13,19 +13,19 @@ Este projeto é uma API RESTful desenvolvida com Spring Boot, destinada ao geren
 
 ## 📂 Estrutura do Projeto
 
-src/
-├── main/
-│ ├── java/
-│ │ └── com/
-│ │ └── example/
-│ │ └── demo/
-│ │ └── business/
-│ │ ├── controllers/
-│ │ ├── models/
-│ │ ├── repositories/
-│ │ └── services/
-│ └── resources/
-│ ├── application.properties
+src/  
+├── main/  
+│ ├── java/  
+│ │ └── com/  
+│ │ └── example/  
+│ │ └── demo/  
+│ │ └── business/  
+│ │ ├── controllers/  
+│ │ ├── models/  
+│ │ ├── repositories/  
+│ │ └── services/  
+│ └── resources/  
+│ ├── application.properties  
 │ └── data.sql
 
 ## ⚙️ Configuração
