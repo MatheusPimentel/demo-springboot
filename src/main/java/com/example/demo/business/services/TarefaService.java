@@ -1,11 +1,15 @@
 package com.example.demo.business.services;
 
 import com.example.demo.business.models.Tarefa;
+import com.example.demo.business.models.dtos.TarefaRequestDTO;
+import com.example.demo.business.models.dtos.TarefaResponseDTO;
+import com.example.demo.business.repositories.ProjetoRepository;
 import com.example.demo.business.repositories.TarefaRepository;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -13,26 +17,49 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TarefaService {
     private final TarefaRepository tarefaRepository;
+    private final ProjetoRepository projetoRepository;
 
-    public ResponseEntity<Tarefa> saveTarefa(@NonNull Tarefa tarefa) {
-        return ResponseEntity.ok(tarefaRepository.save(tarefa));
+    public TarefaResponseDTO saveTarefa(@NonNull TarefaRequestDTO tarefaDto) {
+        Tarefa tarefa = new Tarefa(tarefaDto);
+        this.loadDependencies(tarefa, tarefaDto);
+        return tarefaRepository.save(tarefa).getTarefaResponseDTO();
     }
 
-    public ResponseEntity<Tarefa> findTarefaById(@NonNull Long id) {
-        return tarefaRepository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public TarefaResponseDTO updateTarefa(@NonNull Long id, @NonNull TarefaRequestDTO tarefaDto) {
+        Tarefa tarefa = this.getTarefaById(id);
+        tarefa.buildTarefaDto(tarefaDto);
+        this.loadDependencies(tarefa, tarefaDto);
+        return tarefaRepository.save(tarefa).getTarefaResponseDTO();
     }
 
-    public ResponseEntity<List<Tarefa>> getTarefas() {
-        return ResponseEntity.ok(tarefaRepository.findAll());
+    public TarefaResponseDTO findTarefaById(@NonNull Long id) {
+        return this.getTarefaById(id).getTarefaResponseDTO();
     }
 
-    public ResponseEntity deleteTarefa(@NonNull Long id) {
+    public List<TarefaResponseDTO> findTarefas() {
+        return tarefaRepository.findAll().stream().map(Tarefa::getTarefaResponseDTO).toList();
+    }
+
+    public void deleteTarefa(@NonNull Long id) {
         if (!tarefaRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Tarefa não encontrada");
         }
         tarefaRepository.deleteById(id);
-        return ResponseEntity.ok().build();
+    }
+
+    public Tarefa getTarefaById(@NonNull Long id) {
+        return tarefaRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tarefa não encontrada"));
+    }
+
+    private void loadDependencies(@NonNull Tarefa tarefa, TarefaRequestDTO tarefaDto) {
+        if (tarefaDto.projetoId() != null) {
+            projetoRepository.findById(tarefaDto.projetoId()).ifPresentOrElse(
+                    tarefa::setProjeto,
+                    () -> {
+                        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Projeto não encontrado");
+                    }
+            );
+        }
     }
 }

@@ -1,9 +1,8 @@
 package com.example.demo.business.models;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.example.demo.business.models.dtos.TarefaRequestDTO;
+import com.example.demo.business.models.dtos.TarefaResponseDTO;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -22,5 +21,23 @@ public class Tarefa {
 
     private String descricao;
 
-    private Boolean concluida;
+    private boolean concluida = false;
+
+    @ManyToOne
+    @JoinColumn(name = "projeto_id")
+    private Projeto projeto;
+
+    public Tarefa(TarefaRequestDTO tarefaRequestDTO) {
+        this.buildTarefaDto(tarefaRequestDTO);
+    }
+
+    public void buildTarefaDto(TarefaRequestDTO tarefaRequestDTO) {
+        this.titulo = tarefaRequestDTO.titulo();
+        this.descricao = tarefaRequestDTO.descricao();
+        this.concluida = tarefaRequestDTO.concluida();
+    }
+
+    public TarefaResponseDTO getTarefaResponseDTO() {
+        return new TarefaResponseDTO(id, titulo, descricao, concluida);
+    }
 }
