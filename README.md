@@ -1,59 +1,68 @@
-# 📋 Projeto: API de Gerenciamento de Tarefas
+# Demo Spring Boot API
 
-Este projeto é uma API RESTful desenvolvida com Spring Boot, destinada ao gerenciamento de tarefas.
+Este projeto é uma API RESTful construída com Spring Boot para gerenciamento de Projetos e Tarefas.
 
-## 🚀 Tecnologias Utilizadas
+## 🧰 Tecnologias utilizadas
 
-- Java 21
-- Spring Boot 3.4.5
-- Spring Data JPA
-- H2 Database
-- Lombok
-- Maven
+* Java 17
+* Spring Boot
+* Spring Data JPA
+* H2 Database (para testes)
+* Jakarta Validation
+* Lombok
 
-## 📂 Estrutura do Projeto
+## 📁 Estrutura do projeto
 
-src/  
-├── main/  
-│ ├── java/  
-│ │ └── com/  
-│ │ └── example/  
-│ │ └── demo/  
-│ │ └── business/  
-│ │ ├── controllers/  
-│ │ ├── models/  
-│ │ ├── repositories/  
-│ │ └── services/  
-│ └── resources/  
-│ ├── application.properties  
-│ └── data.sql
+```
+src
+└── main
+    ├── java
+    │   └── com.example.demo
+    │       └── business
+    │           ├── controllers
+    │           ├── dtos
+    │           ├── models
+    │           ├── repositories
+    │           └── services
+    └── resources
+        ├── application.properties
+        └── data.sql
+```
 
-## ⚙️ Configuração
+## ⚙️ Como executar
 
-No arquivo `application.properties`, configure as propriedades do banco de dados H2:
+```bash
+./mvnw spring-boot:run
+```
 
-spring.datasource.url=jdbc:h2:mem:demo
-spring.datasource.driverClassName=org.h2.Driver
-spring.datasource.username=sa
-spring.datasource.password=
-spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
-spring.h2.console.enabled=true
+Acesse: [http://localhost:8080/tarefas](http://localhost:8080/tarefas)
 
+## 📝 Funcionalidades
 
-## 📬 Endpoints da API
+* CRUD de Projetos
+* CRUD de Tarefas
+* Validações de entrada
+* Associação de tarefas a projetos
 
-- **Criar Tarefa**: `POST /tarefas`
-- **Atualizar Tarefa**: `PUT /tarefas`
-- **Buscar Tarefa por ID**: `GET /tarefas/{id}`
-- **Listar Todas as Tarefas**: `GET /tarefas`
-- **Deletar Tarefa**: `DELETE /tarefas/{id}`
+## 📬 Endpoints principais
 
-## 🧪 Testando com Postman
+* `GET /tarefas`
+* `POST /tarefas`
+* `PUT /tarefas/{id}`
+* `DELETE /tarefas/{id}`
+* `GET /projetos`
+* `POST /projetos`
 
-Você pode utilizar o Postman para testar os endpoints acima.  
-Certifique-se de que a aplicação esteja em execução e utilize a URL base `http://localhost:8080`.
+## ✅ Próximos passos sugeridos
 
-## 📝 Autor
+* Adicionar testes automatizados (unitários e de integração)
+* Implementar autenticação (JWT)
+* Documentar a API com Swagger
+* Separar camada de mapeamento (ex: MapStruct ou manual)
+* Criar tratamento global de exceções com `@ControllerAdvice`
 
-- **Nome**: Matheus Pimentel
-- **GitHub**: [MatheusPimentel](https://github.com/MatheusPimentel)
+---
+
+## 👨‍💼 Autor
+
+[Matheus Pimentel](https://github.com/MatheusPimentel)
