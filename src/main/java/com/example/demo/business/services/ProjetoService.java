@@ -27,7 +27,6 @@ public class ProjetoService {
     public ProjetoResponseDTO updateProjeto(@NonNull Long id, @NonNull ProjetoRequestDTO projetoDto) {
         Projeto projeto = this.getProjetoById(id);
         projeto.buildProjetoDto(projetoDto);
-        this.loadDependencies(projeto);
         return projetoRepository.save(projeto).getProjetoResponseDto();
     }
 

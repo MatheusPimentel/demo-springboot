@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Objects;
+
 @Entity
 @Data
 @AllArgsConstructor
@@ -34,7 +36,7 @@ public class Tarefa {
     public void buildTarefaDto(TarefaRequestDTO tarefaRequestDTO) {
         this.titulo = tarefaRequestDTO.titulo();
         this.descricao = tarefaRequestDTO.descricao();
-        this.concluida = tarefaRequestDTO.concluida();
+        this.concluida = Objects.requireNonNullElse(tarefaRequestDTO.concluida(), false);
     }
 
     public TarefaResponseDTO getTarefaResponseDTO() {
