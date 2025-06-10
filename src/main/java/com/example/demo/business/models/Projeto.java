@@ -2,7 +2,6 @@ package com.example.demo.business.models;
 
 import com.example.demo.business.models.dtos.ProjetoRequestDTO;
 import com.example.demo.business.models.dtos.ProjetoResponseDTO;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
