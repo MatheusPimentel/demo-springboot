@@ -23,10 +23,8 @@ class TarefaServiceTest {
 
     @Mock
     private TarefaRepository tarefaRepository;
-
     @Mock
     private ProjetoRepository projetoRepository;
-
     @InjectMocks
     private TarefaService tarefaService;
 

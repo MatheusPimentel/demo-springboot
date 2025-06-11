@@ -7,6 +7,8 @@ import com.example.demo.business.repositories.ProjetoRepository;
 import com.example.demo.business.repositories.TarefaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -19,8 +21,11 @@ import static org.mockito.Mockito.*;
 
 class ProjetoServiceTest {
 
+    @Mock
     private ProjetoRepository projetoRepository;
+    @Mock
     private TarefaRepository tarefaRepository;
+    @InjectMocks
     private ProjetoService projetoService;
 
     @BeforeEach

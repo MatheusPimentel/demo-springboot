@@ -4,12 +4,14 @@ Este projeto é uma API RESTful construída com Spring Boot para gerenciamento d
 
 ## 🧰 Tecnologias utilizadas
 
-* Java 17
-* Spring Boot
-* Spring Data JPA
-* H2 Database (para testes)
-* Jakarta Validation
-* Lombok
+- Java 21
+- Spring Boot
+- Spring Data JPA
+- H2 Database (para testes)
+- Jakarta Validation
+- Lombok
+- Springdoc OpenAPI (Swagger UI)
+- JUnit 5 + Mockito + AssertJ (testes unitários)
 
 ## 📁 Estrutura do projeto
 
@@ -25,8 +27,14 @@ src
     │           ├── repositories
     │           └── services
     └── resources
-        ├── application.properties
-        └── data.sql
+    │   ├── application.properties
+    │   └── data.sql
+    └── test
+        └── java
+            └── com.example.demo
+                └── business
+                    ├── controllers
+                    └── services
 ```
 
 ## ⚙️ Como executar
@@ -35,7 +43,10 @@ src
 ./mvnw spring-boot:run
 ```
 
-Acesse: [http://localhost:8080/tarefas](http://localhost:8080/tarefas)
+Acesse: [http://localhost:8088/tarefas](http://localhost:8088/tarefas)
+
+Acesse a documentação Swagger em:
+/swagger-ui.html ou /swagger-ui/index.html
 
 ## 📝 Funcionalidades
 
@@ -46,18 +57,23 @@ Acesse: [http://localhost:8080/tarefas](http://localhost:8080/tarefas)
 
 ## 📬 Endpoints principais
 
+### Tarefas
 * `GET /tarefas`
+* `GET /tarefas/{id}`
 * `POST /tarefas`
 * `PUT /tarefas/{id}`
 * `DELETE /tarefas/{id}`
+
+### Projetos
 * `GET /projetos`
+* `GET /projetos/{id}`
 * `POST /projetos`
+* `PUT /projetos/{id}`
+* `DELETE /projetos/{id}`
 
 ## ✅ Próximos passos sugeridos
 
-* Adicionar testes automatizados (unitários e de integração)
 * Implementar autenticação (JWT)
-* Documentar a API com Swagger
 * Separar camada de mapeamento (ex: MapStruct ou manual)
 * Criar tratamento global de exceções com `@ControllerAdvice`
 
