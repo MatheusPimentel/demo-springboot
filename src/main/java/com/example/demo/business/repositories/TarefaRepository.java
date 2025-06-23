@@ -7,9 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-@Repository
 public interface TarefaRepository extends JpaRepository<Tarefa, Long> {
 
-    @Query("SELECT t FROM Tarefa t WHERE t.projeto.id = ?1")
-    public List<Tarefa> findAllByProjetoId(Long id);
+    List<Tarefa> findByProjetoId(Long projetoId);
 }

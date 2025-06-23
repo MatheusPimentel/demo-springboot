@@ -1,10 +1,9 @@
 package com.example.demo.business.models;
 
-import com.example.demo.business.models.dtos.ProjetoRequestDTO;
-import com.example.demo.business.models.dtos.ProjetoResponseDTO;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
@@ -12,10 +11,12 @@ import java.util.List;
 
 @Entity
 @Data
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @AllArgsConstructor
 @NoArgsConstructor
 public class Projeto {
     @Id
+    @EqualsAndHashCode.Include
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
@@ -25,17 +26,4 @@ public class Projeto {
 
     @OneToMany(mappedBy = "projeto", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Tarefa> tarefas = new ArrayList<>();
-
-    public Projeto(ProjetoRequestDTO projetoRequestDTO) {
-        this.buildProjetoDto(projetoRequestDTO);
-    }
-
-    public void buildProjetoDto(ProjetoRequestDTO projetoRequestDTO) {
-        this.nome = projetoRequestDTO.nome();
-        this.descricao = projetoRequestDTO.descricao();
-    }
-
-    public ProjetoResponseDTO getProjetoResponseDto() {
-        return new ProjetoResponseDTO(id, nome, descricao, tarefas.stream().map(Tarefa::getTarefaResponseDTO).toList());
-    }
 }

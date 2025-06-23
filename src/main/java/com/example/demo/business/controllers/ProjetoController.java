@@ -9,10 +9,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.util.List;
+import java.net.URI;
 
 @RestController
 @RequiredArgsConstructor
@@ -28,13 +31,16 @@ public class ProjetoController {
             @ApiResponse(responseCode = "400", description = "Dados inválidos")
     })
     public ResponseEntity<ProjetoResponseDTO> save(@Valid @RequestBody ProjetoRequestDTO projetoDto) {
-        return ResponseEntity.ok(projetoService.saveProjeto(projetoDto));
+        ProjetoResponseDTO savedProjeto = projetoService.saveProjeto(projetoDto);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
+                .buildAndExpand(savedProjeto.id()).toUri();
+        return ResponseEntity.created(location).body(savedProjeto);
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Atualiza um projeto existente", description = "Atualiza os dados de um projeto com base no ID.")
     public ResponseEntity<ProjetoResponseDTO> update(@PathVariable("id") Long id,
-                                                          @Valid @RequestBody ProjetoRequestDTO projetoDto) {
+                                                     @Valid @RequestBody ProjetoRequestDTO projetoDto) {
         return ResponseEntity.ok(projetoService.updateProjeto(id, projetoDto));
     }
 
@@ -45,9 +51,9 @@ public class ProjetoController {
     }
 
     @GetMapping
-    @Operation(summary = "Lista todos os projetos", description = "Retorna a lista de todos os projetos cadastrados.")
-    public ResponseEntity<List<ProjetoResponseDTO>> findAll() {
-        return ResponseEntity.ok(projetoService.findProjetos());
+    @Operation(summary = "Lista todos os projetos paginado", description = "Retorna a lista de todos os projetos cadastrados com paginação.")
+    public ResponseEntity<Page<ProjetoResponseDTO>> findAll(Pageable pageable) {
+        return ResponseEntity.ok(projetoService.findProjetos(pageable));
     }
 
     @DeleteMapping("/{id}")

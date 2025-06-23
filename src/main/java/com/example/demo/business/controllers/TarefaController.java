@@ -9,10 +9,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.util.List;
+import java.net.URI;
 
 @RestController
 @RequiredArgsConstructor
@@ -29,7 +32,10 @@ public class TarefaController {
             @ApiResponse(responseCode = "404", description = "Projeto não encontrado")
     })
     public ResponseEntity<TarefaResponseDTO> save(@Valid @RequestBody TarefaRequestDTO tarefaDto) {
-        return ResponseEntity.ok(tarefaService.saveTarefa(tarefaDto));
+        TarefaResponseDTO savedTarefa = tarefaService.saveTarefa(tarefaDto);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
+                .buildAndExpand(savedTarefa.id()).toUri();
+        return ResponseEntity.created(location).body(savedTarefa);
     }
 
     @PutMapping("/{id}")
@@ -47,8 +53,8 @@ public class TarefaController {
 
     @GetMapping
     @Operation(summary = "Busca de todas as tarefas", description = "Retorna todas as tarefas do banco.")
-    public ResponseEntity<List<TarefaResponseDTO>> findAll() {
-        return ResponseEntity.ok(tarefaService.findTarefas());
+    public ResponseEntity<Page<TarefaResponseDTO>> findAll(Pageable pageable) {
+        return ResponseEntity.ok(tarefaService.findTarefas(pageable));
     }
 
     @DeleteMapping("/{id}")

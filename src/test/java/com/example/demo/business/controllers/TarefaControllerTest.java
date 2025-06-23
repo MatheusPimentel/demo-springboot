@@ -9,16 +9,19 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(TarefaController.class)
 class TarefaControllerTest {
@@ -31,7 +34,6 @@ class TarefaControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
-
     @Test
     void deveCriarTarefa() throws Exception {
         TarefaRequestDTO request = new TarefaRequestDTO("Título", "Descrição", 1L, true);
@@ -42,7 +44,8 @@ class TarefaControllerTest {
         mockMvc.perform(post("/tarefas")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", "http://localhost/tarefas/1"))
                 .andExpect(jsonPath("$.id").value(1L))
                 .andExpect(jsonPath("$.titulo").value("Título"));
     }
@@ -75,12 +78,16 @@ class TarefaControllerTest {
     @Test
     void deveListarTarefas() throws Exception {
         TarefaResponseDTO response = new TarefaResponseDTO(1L, "Título", "Descrição", true);
+        Page<TarefaResponseDTO> paginaDeTarefas = new PageImpl<>(List.of(response));
 
-        Mockito.when(tarefaService.findTarefas()).thenReturn(List.of(response));
+        Mockito.when(tarefaService.findTarefas(any(Pageable.class))).thenReturn(paginaDeTarefas);
 
-        mockMvc.perform(get("/tarefas"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(1L));
+        mockMvc.perform(get("/tarefas")
+                        .param("page", "0")
+                        .param("size", "5"))
+                .andExpect(jsonPath("$.totalElements", is(1)))
+                .andExpect(jsonPath("$.content[0].id", is(1)))
+                .andExpect(jsonPath("$.content[0].titulo", is("Título")));
     }
 
     @Test

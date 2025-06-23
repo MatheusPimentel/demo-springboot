@@ -1,16 +1,22 @@
 package com.example.demo.business.services;
 
+import com.example.demo.business.mappers.ProjetoMapper;
 import com.example.demo.business.models.Projeto;
 import com.example.demo.business.models.dtos.ProjetoRequestDTO;
 import com.example.demo.business.models.dtos.ProjetoResponseDTO;
 import com.example.demo.business.repositories.ProjetoRepository;
-import com.example.demo.business.repositories.TarefaRepository;
-import org.junit.jupiter.api.BeforeEach;
+import com.example.demo.exceptions.domain.ResourceNotFoundException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.springframework.web.server.ResponseStatusException;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,112 +25,132 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class ProjetoServiceTest {
 
     @Mock
     private ProjetoRepository projetoRepository;
+
     @Mock
-    private TarefaRepository tarefaRepository;
+    private ProjetoMapper projetoMapper;
+
     @InjectMocks
     private ProjetoService projetoService;
 
-    @BeforeEach
-    void setUp() {
-        projetoRepository = mock(ProjetoRepository.class);
-        tarefaRepository = mock(TarefaRepository.class);
-        projetoService = new ProjetoService(projetoRepository, tarefaRepository);
-    }
-
     @Test
     void deveSalvarProjetoComSucesso() {
-        ProjetoRequestDTO dto = new ProjetoRequestDTO("Nome", "Descrição");
-        Projeto projetoSalvo = new Projeto(dto);
+        // 1. Arrange (Cenário)
+        ProjetoRequestDTO requestDTO = new ProjetoRequestDTO("Nome", "Descrição");
+
+        Projeto projetoMapeado = new Projeto(); // O objeto que o mapper "criaria"
+        Projeto projetoSalvo = new Projeto();   // O objeto que o repo "salvaria"
         projetoSalvo.setId(1L);
+        ProjetoResponseDTO responseDTO = new ProjetoResponseDTO(1L, "Nome", "Descrição", Collections.emptyList());
 
-        when(projetoRepository.save(any())).thenReturn(projetoSalvo);
+        // Programando os mocks
+        when(projetoMapper.toEntity(any(ProjetoRequestDTO.class))).thenReturn(projetoMapeado);
+        when(projetoRepository.save(any(Projeto.class))).thenReturn(projetoSalvo);
+        when(projetoMapper.toDto(any(Projeto.class))).thenReturn(responseDTO);
 
-        ProjetoResponseDTO response = projetoService.saveProjeto(dto);
+        // 2. Act (Ação)
+        ProjetoResponseDTO resultado = projetoService.saveProjeto(requestDTO);
 
-        assertThat(response.id()).isEqualTo(1L);
-        assertThat(response.nome()).isEqualTo("Nome");
+        // 3. Assert (Verificação)
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.id()).isEqualTo(1L);
     }
 
     @Test
     void deveRetornarProjetoPorId() {
-        Projeto projeto = new Projeto(new ProjetoRequestDTO("Nome", "Descricao"));
-        projeto.setId(1L);
+        // Arrange
+        Projeto projetoDoBanco = new Projeto();
+        projetoDoBanco.setId(1L);
+        ProjetoResponseDTO responseDTO = new ProjetoResponseDTO(1L, "Nome", "Descrição", Collections.emptyList());
 
-        when(projetoRepository.findById(1L)).thenReturn(Optional.of(projeto));
+        when(projetoRepository.findById(1L)).thenReturn(Optional.of(projetoDoBanco));
+        when(projetoMapper.toDto(any(Projeto.class))).thenReturn(responseDTO);
 
-        ProjetoResponseDTO response = projetoService.findProjetoById(1L);
+        // Act
+        ProjetoResponseDTO resultado = projetoService.findProjetoById(1L);
 
-        assertThat(response.id()).isEqualTo(1L);
-        assertThat(response.nome()).isEqualTo("Nome");
+        // Assert
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.id()).isEqualTo(1L);
     }
 
     @Test
-    void deveLancarExcecao_ProjetoNaoEncontradoPorId() {
-        when(projetoRepository.findById(1L)).thenReturn(Optional.empty());
+    void deveLancarExcecao_QuandoProjetoNaoEncontradoPorId() {
+        when(projetoRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> projetoService.findProjetoById(1L))
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("Projeto não encontrado");
+        assertThatThrownBy(() -> projetoService.findProjetoById(99L))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Projeto com ID 99 não encontrado.");
     }
 
     @Test
-    void deveRetornarListaDeProjetos() {
-        Projeto projeto = new Projeto(new ProjetoRequestDTO("Nome", "Descricao"));
-        projeto.setId(1L);
+    void deveRetornarListaDeProjetosPaginada() {
+        Projeto projetoDoBanco = new Projeto();
+        Page<Projeto> paginaDeProjetos = new PageImpl<>(List.of(projetoDoBanco));
+        ProjetoResponseDTO responseDTO = new ProjetoResponseDTO(1L, "Nome", "Descrição", Collections.emptyList());
+        Pageable pageable = PageRequest.of(0, 10);
 
-        when(projetoRepository.findAll()).thenReturn(List.of(projeto));
+        when(projetoRepository.findAll(any(Pageable.class))).thenReturn(paginaDeProjetos);
+        when(projetoMapper.toDto(any(Projeto.class))).thenReturn(responseDTO);
 
-        List<ProjetoResponseDTO> projetos = projetoService.findProjetos();
+        Page<ProjetoResponseDTO> resultado = projetoService.findProjetos(pageable);
 
-        assertThat(projetos).hasSize(1);
-        assertThat(projetos.get(0).id()).isEqualTo(1L);
+        assertThat(resultado.getTotalElements()).isEqualTo(1);
+        assertThat(resultado.getContent().get(0).id()).isEqualTo(1L);
     }
 
     @Test
     void deveAtualizarProjetoComSucesso() {
-        Projeto projeto = new Projeto(new ProjetoRequestDTO("Antigo", "Antigo"));
-        projeto.setId(1L);
+        ProjetoRequestDTO requestDTO = new ProjetoRequestDTO("Novo Nome", "Nova Descrição");
+        Projeto projetoExistente = new Projeto();
+        projetoExistente.setId(1L);
+        ProjetoResponseDTO responseDTO = new ProjetoResponseDTO(1L, "Novo Nome", "Nova Descrição", Collections.emptyList());
 
-        ProjetoRequestDTO novoDto = new ProjetoRequestDTO("Novo", "Novo");
+        when(projetoRepository.findById(1L)).thenReturn(Optional.of(projetoExistente));
+        when(projetoRepository.save(any(Projeto.class))).thenReturn(projetoExistente); // O save retorna a entidade atualizada
+        when(projetoMapper.toDto(any(Projeto.class))).thenReturn(responseDTO);
 
-        when(projetoRepository.findById(1L)).thenReturn(Optional.of(projeto));
-        when(projetoRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        ProjetoResponseDTO resultado = projetoService.updateProjeto(1L, requestDTO);
 
-        ProjetoResponseDTO atualizado = projetoService.updateProjeto(1L, novoDto);
-
-        assertThat(atualizado.nome()).isEqualTo("Novo");
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.nome()).isEqualTo("Novo Nome");
+        verify(projetoMapper, times(1)).updateProjetoFromRequestDto(requestDTO, projetoExistente);
     }
 
     @Test
     void deveLancarExcecao_ProjetoNaoEncontradoParaAtualizar() {
-        ProjetoRequestDTO novoDto = new ProjetoRequestDTO("Novo", "Novo");
+        ProjetoRequestDTO requestDTO = new ProjetoRequestDTO("Novo", "Novo");
+        when(projetoRepository.findById(anyLong())).thenReturn(Optional.empty());
 
-        when(projetoRepository.findById(1L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> projetoService.updateProjeto(1L, novoDto))
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("Projeto não encontrado");
+        assertThatThrownBy(() -> projetoService.updateProjeto(99L, requestDTO))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Projeto com ID 99 não encontrado.");
     }
 
     @Test
     void deveDeletarProjetoExistente() {
-        when(projetoRepository.existsById(1L)).thenReturn(true);
+        Projeto projetoExistente = new Projeto();
+        projetoExistente.setId(1L);
+
+        when(projetoRepository.findById(1L)).thenReturn(Optional.of(projetoExistente));
+
+        doNothing().when(projetoRepository).deleteById(1L);
 
         projetoService.deleteProjeto(1L);
 
-        verify(projetoRepository).deleteById(1L);
+        verify(projetoRepository, times(1)).deleteById(1L);
     }
 
     @Test
     void deveLancarExcecao_AoDeletarProjetoInexistente() {
-        when(projetoRepository.existsById(1L)).thenReturn(false);
+        lenient().when(projetoRepository.existsById(99L)).thenReturn(false);
 
-        assertThatThrownBy(() -> projetoService.deleteProjeto(1L))
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("Projeto não encontrado");
+        assertThatThrownBy(() -> projetoService.deleteProjeto(99L))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Projeto com ID 99 não encontrado.");
     }
 }

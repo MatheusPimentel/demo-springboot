@@ -1,16 +1,22 @@
 package com.example.demo.business.services;
 
+import com.example.demo.business.mappers.TarefaMapper;
 import com.example.demo.business.models.Projeto;
 import com.example.demo.business.models.Tarefa;
 import com.example.demo.business.models.dtos.TarefaRequestDTO;
+import com.example.demo.business.models.dtos.TarefaResponseDTO;
 import com.example.demo.business.repositories.ProjetoRepository;
 import com.example.demo.business.repositories.TarefaRepository;
-import org.junit.jupiter.api.BeforeEach;
+import com.example.demo.exceptions.domain.ResourceNotFoundException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.springframework.web.server.ResponseStatusException;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,119 +25,154 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class TarefaServiceTest {
 
     @Mock
     private TarefaRepository tarefaRepository;
     @Mock
     private ProjetoRepository projetoRepository;
+    @Mock
+    private TarefaMapper tarefaMapper;
     @InjectMocks
     private TarefaService tarefaService;
 
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-    }
-
     @Test
     void deveSalvarTarefaComProjetoValido() {
-        TarefaRequestDTO dto = new TarefaRequestDTO("Título", "Descrição", 1L, true);
-        Projeto projeto = new Projeto();
-        projeto.setId(1L);
+        // 1. Arrange (Cenário)
+        TarefaRequestDTO requestDTO = new TarefaRequestDTO("Título", "Descrição", 1L, true);
+        Projeto projetoExistente = new Projeto();
+        projetoExistente.setId(1L);
+        Tarefa tarefaMapeada = new Tarefa();
+        Tarefa tarefaSalva = new Tarefa();
+        tarefaSalva.setId(10L);
+        TarefaResponseDTO responseDTO = new TarefaResponseDTO(10L, "Título", "Descrição", true);
 
-        when(projetoRepository.findById(1L)).thenReturn(Optional.of(projeto));
-        when(tarefaRepository.save(any(Tarefa.class))).thenAnswer(i -> i.getArgument(0));
+        // Programando os mocks
+        when(projetoRepository.findById(1L)).thenReturn(Optional.of(projetoExistente));
+        when(tarefaMapper.toEntity(requestDTO)).thenReturn(tarefaMapeada);
+        when(tarefaRepository.save(tarefaMapeada)).thenReturn(tarefaSalva);
+        when(tarefaMapper.toDto(tarefaSalva)).thenReturn(responseDTO);
 
-        var response = tarefaService.saveTarefa(dto);
+        // 2. Act (Ação)
+        TarefaResponseDTO resultado = tarefaService.saveTarefa(requestDTO);
 
-        assertThat(response).isNotNull();
-        assertThat(response.titulo()).isEqualTo("Título");
-        verify(tarefaRepository, times(1)).save(any(Tarefa.class));
+        // 3. Assert (Verificação)
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.id()).isEqualTo(10L);
+        assertThat(resultado.titulo()).isEqualTo("Título");
     }
 
     @Test
     void deveLancarExcecaoQuandoProjetoNaoEncontradoAoSalvar() {
         TarefaRequestDTO dto = new TarefaRequestDTO("Título", "Descrição", 99L, true);
 
+        when(tarefaMapper.toEntity(dto)).thenReturn(new Tarefa());
+
         when(projetoRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> tarefaService.saveTarefa(dto))
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("Projeto não encontrado");
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Projeto com ID 99 não encontrado.");
     }
 
     @Test
     void deveBuscarTarefaPorId() {
-        Tarefa tarefa = new Tarefa();
-        tarefa.setId(1L);
-        tarefa.setTitulo("Teste");
+        // Arrange
+        Tarefa tarefaDoBanco = new Tarefa();
+        tarefaDoBanco.setId(1L);
+        TarefaResponseDTO responseDTO = new TarefaResponseDTO(1L, "Teste", "Descrição", false);
 
-        when(tarefaRepository.findById(1L)).thenReturn(Optional.of(tarefa));
+        when(tarefaRepository.findById(1L)).thenReturn(Optional.of(tarefaDoBanco));
+        when(tarefaMapper.toDto(tarefaDoBanco)).thenReturn(responseDTO);
 
-        var response = tarefaService.findTarefaById(1L);
+        // Act
+        TarefaResponseDTO resultado = tarefaService.findTarefaById(1L);
 
-        assertThat(response).isNotNull();
-        assertThat(response.id()).isEqualTo(1L);
+        // Assert
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.id()).isEqualTo(1L);
     }
 
     @Test
     void deveLancarExcecaoQuandoTarefaNaoEncontrada() {
+        // Arrange
         when(tarefaRepository.findById(99L)).thenReturn(Optional.empty());
 
+        // Act & Assert
         assertThatThrownBy(() -> tarefaService.findTarefaById(99L))
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("Tarefa não encontrada");
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Tarefa com ID 99 não encontrada");
     }
 
     @Test
     void deveDeletarTarefaExistente() {
-        when(tarefaRepository.existsById(1L)).thenReturn(true);
+        // Arrange
+        Tarefa tarefaExistente = new Tarefa();
+        tarefaExistente.setId(1L);
+        when(tarefaRepository.findById(1L)).thenReturn(Optional.of(tarefaExistente));
+        doNothing().when(tarefaRepository).deleteById(1L);
 
+        // Act
         tarefaService.deleteTarefa(1L);
 
+        // Assert
         verify(tarefaRepository, times(1)).deleteById(1L);
     }
 
     @Test
     void deveLancarExcecaoAoDeletarTarefaInexistente() {
-        when(tarefaRepository.existsById(99L)).thenReturn(false);
+        // Arrange
+        when(tarefaRepository.findById(99L)).thenReturn(Optional.empty());
 
+        // Act & Assert
         assertThatThrownBy(() -> tarefaService.deleteTarefa(99L))
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("Tarefa não encontrada");
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Tarefa com ID 99 não encontrada");
     }
 
     @Test
-    void deveRetornarTodasTarefas() {
-        Tarefa tarefa = new Tarefa();
-        tarefa.setId(1L);
-        tarefa.setTitulo("Título");
+    void deveRetornarTodasAsTarefasPaginado() {
+        // Arrange
+        Tarefa tarefaDoBanco = new Tarefa();
+        tarefaDoBanco.setId(1L);
+        Page<Tarefa> paginaDeTarefas = new PageImpl<>(List.of(tarefaDoBanco));
+        TarefaResponseDTO responseDTO = new TarefaResponseDTO(1L, "Título", "Descrição", true);
+        Pageable pageable = PageRequest.of(0, 10);
 
-        when(tarefaRepository.findAll()).thenReturn(List.of(tarefa));
+        when(tarefaRepository.findAll(any(Pageable.class))).thenReturn(paginaDeTarefas);
+        when(tarefaMapper.toDto(any(Tarefa.class))).thenReturn(responseDTO);
 
-        var tarefas = tarefaService.findTarefas();
+        // Act
+        Page<TarefaResponseDTO> resultado = tarefaService.findTarefas(pageable);
 
-        assertThat(tarefas).hasSize(1);
-        assertThat(tarefas.get(0).id()).isEqualTo(1L);
+        // Assert
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.getTotalElements()).isEqualTo(1);
+        assertThat(resultado.getContent().get(0).id()).isEqualTo(1L);
     }
 
     @Test
     void deveAtualizarTarefa() {
-        Tarefa tarefa = new Tarefa();
-        tarefa.setId(1L);
+        // Arrange
+        TarefaRequestDTO requestDTO = new TarefaRequestDTO("Atualizado", "Descrição", 1L, true);
+        Tarefa tarefaExistente = new Tarefa();
+        tarefaExistente.setId(1L);
+        Projeto projetoExistente = new Projeto();
+        projetoExistente.setId(1L);
+        TarefaResponseDTO responseDTO = new TarefaResponseDTO(1L, "Atualizado", "Descrição", true);
 
-        TarefaRequestDTO dto = new TarefaRequestDTO("Atualizado", "Descrição", 1L, true);
+        when(tarefaRepository.findById(1L)).thenReturn(Optional.of(tarefaExistente));
+        when(projetoRepository.findById(1L)).thenReturn(Optional.of(projetoExistente));
+        when(tarefaRepository.save(any(Tarefa.class))).thenReturn(tarefaExistente);
+        when(tarefaMapper.toDto(any(Tarefa.class))).thenReturn(responseDTO);
 
-        Projeto projeto = new Projeto();
-        projeto.setId(1L);
+        // Act
+        TarefaResponseDTO resultado = tarefaService.updateTarefa(1L, requestDTO);
 
-        when(tarefaRepository.findById(1L)).thenReturn(Optional.of(tarefa));
-        when(projetoRepository.findById(1L)).thenReturn(Optional.of(projeto));
-        when(tarefaRepository.save(any(Tarefa.class))).thenAnswer(i -> i.getArgument(0));
-
-        var response = tarefaService.updateTarefa(1L, dto);
-
-        assertThat(response).isNotNull();
-        assertThat(response.titulo()).isEqualTo("Atualizado");
+        // Assert
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.titulo()).isEqualTo("Atualizado");
+        verify(tarefaMapper, times(1)).updateTarefaFromRequestDto(requestDTO, tarefaExistente);
     }
 }

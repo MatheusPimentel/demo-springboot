@@ -1,55 +1,60 @@
 package com.example.demo.business.services;
 
+import com.example.demo.business.mappers.TarefaMapper;
 import com.example.demo.business.models.Tarefa;
 import com.example.demo.business.models.dtos.TarefaRequestDTO;
 import com.example.demo.business.models.dtos.TarefaResponseDTO;
 import com.example.demo.business.repositories.ProjetoRepository;
 import com.example.demo.business.repositories.TarefaRepository;
+import com.example.demo.exceptions.domain.ResourceNotFoundException;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class TarefaService {
     private final TarefaRepository tarefaRepository;
     private final ProjetoRepository projetoRepository;
+    private final TarefaMapper tarefaMapper;
 
+    @Transactional
     public TarefaResponseDTO saveTarefa(@NonNull TarefaRequestDTO tarefaDto) {
-        Tarefa tarefa = new Tarefa(tarefaDto);
+        Tarefa tarefa = tarefaMapper.toEntity(tarefaDto);
         this.loadDependencies(tarefa, tarefaDto);
-        return tarefaRepository.save(tarefa).getTarefaResponseDTO();
+        return tarefaMapper.toDto(tarefaRepository.save(tarefa));
     }
 
+    @Transactional
     public TarefaResponseDTO updateTarefa(@NonNull Long id, @NonNull TarefaRequestDTO tarefaDto) {
         Tarefa tarefa = this.getTarefaById(id);
-        tarefa.buildTarefaDto(tarefaDto);
+        tarefaMapper.updateTarefaFromRequestDto(tarefaDto, tarefa);
         this.loadDependencies(tarefa, tarefaDto);
-        return tarefaRepository.save(tarefa).getTarefaResponseDTO();
+        return tarefaMapper.toDto(tarefaRepository.save(tarefa));
     }
 
     public TarefaResponseDTO findTarefaById(@NonNull Long id) {
-        return this.getTarefaById(id).getTarefaResponseDTO();
+        return tarefaMapper.toDto(this.getTarefaById(id));
     }
 
-    public List<TarefaResponseDTO> findTarefas() {
-        return tarefaRepository.findAll().stream().map(Tarefa::getTarefaResponseDTO).toList();
+    public Page<TarefaResponseDTO> findTarefas(Pageable pageable) {
+        return tarefaRepository.findAll(pageable).map(tarefaMapper::toDto);
     }
 
+    @Transactional
     public void deleteTarefa(@NonNull Long id) {
-        if (!tarefaRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Tarefa não encontrada");
-        }
+        getTarefaById(id); // Verifica se a tarefa existe, lança ResourceNotFoundException se não existir
         tarefaRepository.deleteById(id);
     }
 
     public Tarefa getTarefaById(@NonNull Long id) {
         return tarefaRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tarefa não encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Tarefa com ID " + id + " não encontrada"));
     }
 
     private void loadDependencies(@NonNull Tarefa tarefa, TarefaRequestDTO tarefaDto) {
@@ -57,7 +62,7 @@ public class TarefaService {
             projetoRepository.findById(tarefaDto.projetoId()).ifPresentOrElse(
                     tarefa::setProjeto,
                     () -> {
-                        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Projeto não encontrado");
+                        throw new ResourceNotFoundException("Projeto com ID " + tarefaDto.projetoId() + " não encontrado.");
                     }
             );
         }
