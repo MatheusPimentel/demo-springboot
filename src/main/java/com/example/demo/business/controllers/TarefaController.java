@@ -9,10 +9,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -47,8 +47,8 @@ public class TarefaController {
 
     @GetMapping
     @Operation(summary = "Busca de todas as tarefas", description = "Retorna todas as tarefas do banco.")
-    public ResponseEntity<List<TarefaResponseDTO>> findAll() {
-        return ResponseEntity.ok(tarefaService.findTarefas());
+    public ResponseEntity<Page<TarefaResponseDTO>> findAll(Pageable pageable) {
+        return ResponseEntity.ok(tarefaService.findTarefas(pageable));
     }
 
     @DeleteMapping("/{id}")
