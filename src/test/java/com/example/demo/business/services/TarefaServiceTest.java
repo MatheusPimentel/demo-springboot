@@ -55,7 +55,7 @@ class TarefaServiceTest {
         when(tarefaMapper.toDto(tarefaSalva)).thenReturn(responseDTO);
 
         // 2. Act (Ação)
-        TarefaResponseDTO resultado = tarefaService.saveTarefa(requestDTO);
+        TarefaResponseDTO resultado = tarefaService.save(requestDTO);
 
         // 3. Assert (Verificação)
         assertThat(resultado).isNotNull();
@@ -71,7 +71,7 @@ class TarefaServiceTest {
 
         when(projetoRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> tarefaService.saveTarefa(dto))
+        assertThatThrownBy(() -> tarefaService.save(dto))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Projeto com ID 99 não encontrado.");
     }
@@ -87,7 +87,7 @@ class TarefaServiceTest {
         when(tarefaMapper.toDto(tarefaDoBanco)).thenReturn(responseDTO);
 
         // Act
-        TarefaResponseDTO resultado = tarefaService.findTarefaById(1L);
+        TarefaResponseDTO resultado = tarefaService.findById(1L);
 
         // Assert
         assertThat(resultado).isNotNull();
@@ -100,9 +100,9 @@ class TarefaServiceTest {
         when(tarefaRepository.findById(99L)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThatThrownBy(() -> tarefaService.findTarefaById(99L))
+        assertThatThrownBy(() -> tarefaService.findById(99L))
                 .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining("Tarefa com ID 99 não encontrada");
+                .hasMessageContaining("Recurso com ID 99 não encontrado.");
     }
 
     @Test
@@ -114,7 +114,7 @@ class TarefaServiceTest {
         doNothing().when(tarefaRepository).deleteById(1L);
 
         // Act
-        tarefaService.deleteTarefa(1L);
+        tarefaService.delete(1L);
 
         // Assert
         verify(tarefaRepository, times(1)).deleteById(1L);
@@ -126,9 +126,9 @@ class TarefaServiceTest {
         when(tarefaRepository.findById(99L)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThatThrownBy(() -> tarefaService.deleteTarefa(99L))
+        assertThatThrownBy(() -> tarefaService.delete(99L))
                 .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining("Tarefa com ID 99 não encontrada");
+                .hasMessageContaining("Recurso com ID 99 não encontrado.");
     }
 
     @Test
@@ -144,7 +144,7 @@ class TarefaServiceTest {
         when(tarefaMapper.toDto(any(Tarefa.class))).thenReturn(responseDTO);
 
         // Act
-        Page<TarefaResponseDTO> resultado = tarefaService.findTarefas(pageable);
+        Page<TarefaResponseDTO> resultado = tarefaService.findAll(pageable);
 
         // Assert
         assertThat(resultado).isNotNull();
@@ -168,11 +168,11 @@ class TarefaServiceTest {
         when(tarefaMapper.toDto(any(Tarefa.class))).thenReturn(responseDTO);
 
         // Act
-        TarefaResponseDTO resultado = tarefaService.updateTarefa(1L, requestDTO);
+        TarefaResponseDTO resultado = tarefaService.update(1L, requestDTO);
 
         // Assert
         assertThat(resultado).isNotNull();
         assertThat(resultado.titulo()).isEqualTo("Atualizado");
-        verify(tarefaMapper, times(1)).updateTarefaFromRequestDto(requestDTO, tarefaExistente);
+        verify(tarefaMapper, times(1)).updateFromDto(requestDTO, tarefaExistente);
     }
 }

@@ -40,7 +40,7 @@ class ProjetoControllerTest {
         ProjetoRequestDTO request = new ProjetoRequestDTO("Nome", "Descrição");
         ProjetoResponseDTO response = new ProjetoResponseDTO(1L, "Nome", "Descrição", List.of());
 
-        Mockito.when(projetoService.saveProjeto(any())).thenReturn(response);
+        Mockito.when(projetoService.save(any())).thenReturn(response);
 
         mockMvc.perform(post("/projetos")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -58,7 +58,7 @@ class ProjetoControllerTest {
         ProjetoResponseDTO response = new ProjetoResponseDTO(1L, "Nome", "Descrição", List.of());
         Page<ProjetoResponseDTO> paginaDeProjetos = new PageImpl<>(List.of(response));
 
-        Mockito.when(projetoService.findProjetos(any(Pageable.class))).thenReturn(paginaDeProjetos);
+        Mockito.when(projetoService.findAll(any(Pageable.class))).thenReturn(paginaDeProjetos);
 
         mockMvc.perform(get("/projetos")
                         .param("page", "0")
@@ -75,7 +75,7 @@ class ProjetoControllerTest {
         ProjetoRequestDTO request = new ProjetoRequestDTO("Novo", "Novo");
         ProjetoResponseDTO response = new ProjetoResponseDTO(1L, "Novo", "Novo", List.of());
 
-        Mockito.when(projetoService.updateProjeto(eq(1L), any())).thenReturn(response);
+        Mockito.when(projetoService.update(eq(1L), any())).thenReturn(response);
 
         mockMvc.perform(put("/projetos/1")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -88,7 +88,7 @@ class ProjetoControllerTest {
     void deveBuscarProjetoPorId() throws Exception {
         ProjetoResponseDTO response = new ProjetoResponseDTO(1L, "Nome", "Descrição", List.of());
 
-        Mockito.when(projetoService.findProjetoById(1L)).thenReturn(response);
+        Mockito.when(projetoService.findById(1L)).thenReturn(response);
 
         mockMvc.perform(get("/projetos/1"))
                 .andExpect(status().isOk())
@@ -99,6 +99,6 @@ class ProjetoControllerTest {
     void deveDeletarProjeto() throws Exception {
         mockMvc.perform(delete("/projetos/1"))
                 .andExpect(status().isNoContent());
-        Mockito.verify(projetoService).deleteProjeto(1L);
+        Mockito.verify(projetoService).delete(1L);
     }
 }

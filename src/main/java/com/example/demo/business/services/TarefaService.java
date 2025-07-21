@@ -6,55 +6,51 @@ import com.example.demo.business.models.dtos.TarefaRequestDTO;
 import com.example.demo.business.models.dtos.TarefaResponseDTO;
 import com.example.demo.business.repositories.ProjetoRepository;
 import com.example.demo.business.repositories.TarefaRepository;
+import com.example.demo.core.mapper.GenericMapper;
+import com.example.demo.core.service.AbstractCrudService;
 import com.example.demo.exceptions.domain.ResourceNotFoundException;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
-@RequiredArgsConstructor
-public class TarefaService {
+public class TarefaService extends AbstractCrudService<Tarefa, Long, TarefaRequestDTO, TarefaResponseDTO> {
     private final TarefaRepository tarefaRepository;
     private final ProjetoRepository projetoRepository;
     private final TarefaMapper tarefaMapper;
 
+    public TarefaService(TarefaRepository tarefaRepository, ProjetoRepository projetoRepository, TarefaMapper tarefaMapper) {
+        this.tarefaRepository = tarefaRepository;
+        this.projetoRepository = projetoRepository;
+        this.tarefaMapper = tarefaMapper;
+    }
+
+    @Override
+    protected JpaRepository<Tarefa, Long> getRepository() {
+        return tarefaRepository;
+    }
+
+    @Override
+    protected GenericMapper<Tarefa, TarefaRequestDTO, TarefaResponseDTO> getMapper() {
+        return tarefaMapper;
+    }
+
+    @Override
     @Transactional
-    public TarefaResponseDTO saveTarefa(@NonNull TarefaRequestDTO tarefaDto) {
-        Tarefa tarefa = tarefaMapper.toEntity(tarefaDto);
+    public TarefaResponseDTO save(TarefaRequestDTO tarefaDto) {
+        Tarefa tarefa = getMapper().toEntity(tarefaDto);
         this.loadDependencies(tarefa, tarefaDto);
-        return tarefaMapper.toDto(tarefaRepository.save(tarefa));
+        return getMapper().toDto(getRepository().save(tarefa));
     }
 
+    @Override
     @Transactional
-    public TarefaResponseDTO updateTarefa(@NonNull Long id, @NonNull TarefaRequestDTO tarefaDto) {
-        Tarefa tarefa = this.getTarefaById(id);
-        tarefaMapper.updateTarefaFromRequestDto(tarefaDto, tarefa);
+    public TarefaResponseDTO update(Long id, TarefaRequestDTO tarefaDto) {
+        Tarefa tarefa = getById(id);
+        getMapper().updateFromDto(tarefaDto, tarefa);
         this.loadDependencies(tarefa, tarefaDto);
-        return tarefaMapper.toDto(tarefaRepository.save(tarefa));
-    }
-
-    public TarefaResponseDTO findTarefaById(@NonNull Long id) {
-        return tarefaMapper.toDto(this.getTarefaById(id));
-    }
-
-    public Page<TarefaResponseDTO> findTarefas(Pageable pageable) {
-        return tarefaRepository.findAll(pageable).map(tarefaMapper::toDto);
-    }
-
-    @Transactional
-    public void deleteTarefa(@NonNull Long id) {
-        getTarefaById(id); // Verifica se a tarefa existe, lança ResourceNotFoundException se não existir
-        tarefaRepository.deleteById(id);
-    }
-
-    public Tarefa getTarefaById(@NonNull Long id) {
-        return tarefaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Tarefa com ID " + id + " não encontrada"));
+        return getMapper().toDto(getRepository().save(tarefa));
     }
 
     private void loadDependencies(@NonNull Tarefa tarefa, TarefaRequestDTO tarefaDto) {

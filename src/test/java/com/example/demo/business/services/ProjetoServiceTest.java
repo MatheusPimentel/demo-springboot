@@ -53,7 +53,7 @@ class ProjetoServiceTest {
         when(projetoMapper.toDto(any(Projeto.class))).thenReturn(responseDTO);
 
         // 2. Act (Ação)
-        ProjetoResponseDTO resultado = projetoService.saveProjeto(requestDTO);
+        ProjetoResponseDTO resultado = projetoService.save(requestDTO);
 
         // 3. Assert (Verificação)
         assertThat(resultado).isNotNull();
@@ -71,7 +71,7 @@ class ProjetoServiceTest {
         when(projetoMapper.toDto(any(Projeto.class))).thenReturn(responseDTO);
 
         // Act
-        ProjetoResponseDTO resultado = projetoService.findProjetoById(1L);
+        ProjetoResponseDTO resultado = projetoService.findById(1L);
 
         // Assert
         assertThat(resultado).isNotNull();
@@ -82,9 +82,9 @@ class ProjetoServiceTest {
     void deveLancarExcecao_QuandoProjetoNaoEncontradoPorId() {
         when(projetoRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> projetoService.findProjetoById(99L))
+        assertThatThrownBy(() -> projetoService.findById(99L))
                 .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining("Projeto com ID 99 não encontrado.");
+                .hasMessageContaining("Recurso com ID 99 não encontrado.");
     }
 
     @Test
@@ -97,7 +97,7 @@ class ProjetoServiceTest {
         when(projetoRepository.findAll(any(Pageable.class))).thenReturn(paginaDeProjetos);
         when(projetoMapper.toDto(any(Projeto.class))).thenReturn(responseDTO);
 
-        Page<ProjetoResponseDTO> resultado = projetoService.findProjetos(pageable);
+        Page<ProjetoResponseDTO> resultado = projetoService.findAll(pageable);
 
         assertThat(resultado.getTotalElements()).isEqualTo(1);
         assertThat(resultado.getContent().get(0).id()).isEqualTo(1L);
@@ -114,11 +114,11 @@ class ProjetoServiceTest {
         when(projetoRepository.save(any(Projeto.class))).thenReturn(projetoExistente); // O save retorna a entidade atualizada
         when(projetoMapper.toDto(any(Projeto.class))).thenReturn(responseDTO);
 
-        ProjetoResponseDTO resultado = projetoService.updateProjeto(1L, requestDTO);
+        ProjetoResponseDTO resultado = projetoService.update(1L, requestDTO);
 
         assertThat(resultado).isNotNull();
         assertThat(resultado.nome()).isEqualTo("Novo Nome");
-        verify(projetoMapper, times(1)).updateProjetoFromRequestDto(requestDTO, projetoExistente);
+        verify(projetoMapper, times(1)).updateFromDto(requestDTO, projetoExistente);
     }
 
     @Test
@@ -126,9 +126,9 @@ class ProjetoServiceTest {
         ProjetoRequestDTO requestDTO = new ProjetoRequestDTO("Novo", "Novo");
         when(projetoRepository.findById(anyLong())).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> projetoService.updateProjeto(99L, requestDTO))
+        assertThatThrownBy(() -> projetoService.update(99L, requestDTO))
                 .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining("Projeto com ID 99 não encontrado.");
+                .hasMessageContaining("Recurso com ID 99 não encontrado.");
     }
 
     @Test
@@ -140,7 +140,7 @@ class ProjetoServiceTest {
 
         doNothing().when(projetoRepository).deleteById(1L);
 
-        projetoService.deleteProjeto(1L);
+        projetoService.delete(1L);
 
         verify(projetoRepository, times(1)).deleteById(1L);
     }
@@ -149,8 +149,8 @@ class ProjetoServiceTest {
     void deveLancarExcecao_AoDeletarProjetoInexistente() {
         lenient().when(projetoRepository.existsById(99L)).thenReturn(false);
 
-        assertThatThrownBy(() -> projetoService.deleteProjeto(99L))
+        assertThatThrownBy(() -> projetoService.delete(99L))
                 .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining("Projeto com ID 99 não encontrado.");
+                .hasMessageContaining("Recurso com ID 99 não encontrado.");
     }
 }

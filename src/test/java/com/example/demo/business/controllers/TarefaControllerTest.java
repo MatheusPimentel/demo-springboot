@@ -39,7 +39,7 @@ class TarefaControllerTest {
         TarefaRequestDTO request = new TarefaRequestDTO("Título", "Descrição", 1L, true);
         TarefaResponseDTO response = new TarefaResponseDTO(1L, "Título", "Descrição", true);
 
-        Mockito.when(tarefaService.saveTarefa(any())).thenReturn(response);
+        Mockito.when(tarefaService.save(any())).thenReturn(response);
 
         mockMvc.perform(post("/tarefas")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -55,7 +55,7 @@ class TarefaControllerTest {
         TarefaRequestDTO request = new TarefaRequestDTO("Novo", "Novo", 1L, true);
         TarefaResponseDTO response = new TarefaResponseDTO(1L, "Novo", "Novo", true);
 
-        Mockito.when(tarefaService.updateTarefa(eq(1L), any())).thenReturn(response);
+        Mockito.when(tarefaService.update(eq(1L), any())).thenReturn(response);
 
         mockMvc.perform(put("/tarefas/1")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -68,7 +68,7 @@ class TarefaControllerTest {
     void deveBuscarTarefaPorId() throws Exception {
         TarefaResponseDTO response = new TarefaResponseDTO(1L, "Título", "Descrição", true);
 
-        Mockito.when(tarefaService.findTarefaById(1L)).thenReturn(response);
+        Mockito.when(tarefaService.findById(1L)).thenReturn(response);
 
         mockMvc.perform(get("/tarefas/1"))
                 .andExpect(status().isOk())
@@ -80,7 +80,7 @@ class TarefaControllerTest {
         TarefaResponseDTO response = new TarefaResponseDTO(1L, "Título", "Descrição", true);
         Page<TarefaResponseDTO> paginaDeTarefas = new PageImpl<>(List.of(response));
 
-        Mockito.when(tarefaService.findTarefas(any(Pageable.class))).thenReturn(paginaDeTarefas);
+        Mockito.when(tarefaService.findAll(any(Pageable.class))).thenReturn(paginaDeTarefas);
 
         mockMvc.perform(get("/tarefas")
                         .param("page", "0")
@@ -94,6 +94,6 @@ class TarefaControllerTest {
     void deveDeletarTarefa() throws Exception {
         mockMvc.perform(delete("/tarefas/1"))
                 .andExpect(status().isNoContent());
-        Mockito.verify(tarefaService).deleteTarefa(1L);
+        Mockito.verify(tarefaService).delete(1L);
     }
 }
