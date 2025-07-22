@@ -1,0 +1,32 @@
+# Define a versão do Docker Compose
+version: '3.8'
+
+# Define os serviços (contêineres) que nossa aplicação terá
+services:
+  # Damos um nome ao nosso serviço: "app"
+  app:
+    # A mágica do desenvolvimento acontece aqui!
+    # Em vez de construir uma imagem estática, vamos rodar a aplicação em modo "live".
+    # Usaremos uma imagem pré-pronta que já tem Maven e Java.
+    image: maven:3.9-eclipse-temurin-21
+
+    # O comando que será executado para iniciar a aplicação em modo de desenvolvimento.
+    # Ele usa o Maven Wrapper para rodar o Spring Boot.
+    command: ./mvnw spring-boot:run -Dspring-boot.run.jvmArguments="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+
+    # Mapeia a porta 8088 da sua máquina para a 8080 do contêiner
+    ports:
+      - "8088:8080" # Porta da aplicação
+      - "5005:5005" # Porta para Debug Remoto (opcional)
+
+    # O ponto mais importante: monta o diretório atual do seu projeto
+    # para dentro do diretório /app do contêiner.
+    # Qualquer alteração que você fizer localmente será refletida DENTRO do contêiner.
+    volumes:
+      - .:/app
+
+    # Define o diretório de trabalho dentro do contêiner
+    working_dir: /app
+
+    # Define o nome do contêiner para facilitar a identificação
+    container_name: gerenciador-projetos-dev
