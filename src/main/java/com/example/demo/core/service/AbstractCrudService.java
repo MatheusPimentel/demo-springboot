@@ -1,5 +1,6 @@
 package com.example.demo.core.service;
 import com.example.demo.core.mapper.GenericMapper;
+import com.example.demo.core.model.Identifiable;
 import com.example.demo.exceptions.domain.ResourceNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,7 +13,7 @@ public abstract class AbstractCrudService<
         E,
         ID extends Serializable,
         Req,
-        Res
+        Res extends Identifiable<ID>
         > {
 
     protected abstract JpaRepository<E, ID> getRepository();

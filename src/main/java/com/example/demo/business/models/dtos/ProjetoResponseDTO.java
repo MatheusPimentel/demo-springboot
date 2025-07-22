@@ -1,5 +1,6 @@
 package com.example.demo.business.models.dtos;
 
+import com.example.demo.core.model.Identifiable;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
@@ -17,4 +18,4 @@ public record ProjetoResponseDTO(
 
         @Schema(description = "Tarefas do Projeto")
         List<TarefaResponseDTO> tarefas
-) {}
+) implements Identifiable<Long> {}

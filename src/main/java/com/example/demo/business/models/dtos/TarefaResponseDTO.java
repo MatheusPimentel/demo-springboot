@@ -1,6 +1,7 @@
 package com.example.demo.business.models.dtos;
 
 
+import com.example.demo.core.model.Identifiable;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "Objeto de resposta com os dados da Tarefa")
@@ -16,4 +17,4 @@ public record TarefaResponseDTO(
 
         @Schema(description = "Tarefa concluída", example = "false")
         boolean concluida
-) {}
+) implements Identifiable<Long> {}

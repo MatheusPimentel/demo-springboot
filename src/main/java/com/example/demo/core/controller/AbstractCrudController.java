@@ -1,4 +1,5 @@
 package com.example.demo.core.controller;
+import com.example.demo.core.model.Identifiable;
 import com.example.demo.core.service.AbstractCrudService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -14,7 +15,7 @@ public abstract class AbstractCrudController<
         E,
         ID extends Serializable,
         Req,
-        Res extends Record
+        Res extends Record & Identifiable<ID>
         > {
 
     private final AbstractCrudService<E, ID, Req, Res> service;
@@ -37,12 +38,7 @@ public abstract class AbstractCrudController<
     public ResponseEntity<Res> save(@Valid @RequestBody Req requestDto) {
         Res responseDto = service.save(requestDto);
 
-        Object newId;
-        try {
-            newId = responseDto.getClass().getMethod("id").invoke(responseDto);
-        } catch (Exception e) {
-            throw new RuntimeException("O DTO de Resposta deve conter um método 'id()'", e);
-        }
+        ID newId = responseDto.id();
 
         URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
                 .buildAndExpand(newId).toUri();
