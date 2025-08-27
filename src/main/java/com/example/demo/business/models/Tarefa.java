@@ -1,13 +1,10 @@
 package com.example.demo.business.models;
 
-import com.example.demo.business.models.dtos.TarefaRequestDTO;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-
-import java.util.Objects;
 
 @Entity
 @Data
